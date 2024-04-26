@@ -40,10 +40,10 @@ class CartController extends Controller
 
         if (count($addresses) === 0) {
             return response([
-                'message' => 'You have no at least one address or there is no active address',
+                'message' => 'Please add at least one active address in your settings',
                 'errors' => [
                     'address' => [
-                        'You have no at least one address or there is no active address'
+                        'Please add at least one active address in your settings'
                     ]
                 ]
             ], 422);

@@ -13,7 +13,7 @@ class Genre extends Model
     use SoftDeletes;
 
     protected $guarded = [
-        'id'
+        // 'id'
     ];
 
     public function books(): HasMany

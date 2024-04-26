@@ -13,29 +13,146 @@ class GenreSeeder extends Seeder
     public function run(): void
     {
         $genres = [
-            ['name' => 'Fiction', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Mystery', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Science Fiction', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Romance', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Fantasy', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Thriller', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Horror', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Non-Fiction', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Historical Fiction', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Biography', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Self-Help', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Business', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Humor', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Adventure', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Children', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Young Adult', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Poetry', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Drama', 'description' => fake()->sentences(3, true)],
-            ['name' => 'Crime', 'description' => fake()->sentences(3, true)],
+            [
+                "id" => 1,
+                "name" => "Arts & Photography",
+                "slug" => "arts-and-photography",
+            ],
+            [
+                "id" => 2,
+                "name" => "Biographies & Memoirs",
+                "slug" => "biographies-and-memoirs",
+            ],
+            [
+                "id" => 3,
+                "name" => "Business & Investing",
+                "slug" => "business-and-investing",
+            ],
+            [
+                "id" => 4,
+                "name" => "Calendars",
+                "slug" => "calendars",
+            ],
+            [
+                "id" => 5,
+                "name" => "Children\'s Books",
+                "slug" => "children\'s-books",
+            ],
+            [
+                "id" => 6,
+                "name" => "Comics & Graphic Novels",
+                "slug" => "comics-and-graphic-novels",
+            ],
+            [
+                "id" => 7,
+                "name" => "Computers & Internet",
+                "slug" => "computers-and-internet",
+            ],
+            [
+                "id" => 8,
+                "name" => "Entertainment",
+                "slug" => "entertainment",
+            ],
+            [
+                "id" => 9,
+                "name" => "Health, Mind & Body",
+                "slug" => "health-mind-and-body",
+            ],
+            [
+                "id" => 10,
+                "name" => "History",
+                "slug" => "history",
+            ],
+            [
+                "id" => 11,
+                "name" => "Home & Garden",
+                "slug" => "home-and-garden",
+            ],
+            [
+                "id" => 12,
+                "name" => "Law",
+                "slug" => "law",
+            ],
+            [
+                "id" => 13,
+                "name" => "Literature & Fiction",
+                "slug" => "literature-and-fiction",
+            ],
+            [
+                "id" => 14,
+                "name" => "Medicine",
+                "slug" => "medicine",
+            ],
+            [
+                "id" => 15,
+                "name" => "Mystery & Thrillers",
+                "slug" => "mystery-and-thrillers",
+            ],
+            [
+                "id" => 16,
+                "name" => "Nonfiction",
+                "slug" => "nonfiction",
+            ],
+            [
+                "id" => 17,
+                "name" => "Outdoors & Nature",
+                "slug" => "outdoors-and-nature",
+            ],
+            [
+                "id" => 18,
+                "name" => "Parenting & Families",
+                "slug" => "parenting-and-families",
+            ],
+            [
+                "id" => 19,
+                "name" => "Professional & Technical",
+                "slug" => "professional-and-technical",
+            ],
+            [
+                "id" => 20,
+                "name" => "Reference",
+                "slug" => "reference",
+            ],
+            [
+                "id" => 21,
+                "name" => "Religion & Spirituality",
+                "slug" => "religion-and-spirituality",
+            ],
+            [
+                "id" => 22,
+                "name" => "Romance",
+                "slug" => "romance",
+            ],
+            [
+                "id" => 23,
+                "name" => "Science",
+                "slug" => "science",
+            ],
+            [
+                "id" => 24,
+                "name" => "Science Fiction & Fantasy",
+                "slug" => "science-fiction-and-fantasy",
+            ],
+            [
+                "id" => 25,
+                "name" => "Sports",
+                "slug" => "sports",
+            ],
+            [
+                "id" => 26,
+                "name" => "Teens",
+                "slug" => "teens",
+            ],
+            [
+                "id" => 27,
+                "name" => "Travel",
+                "slug" => "travel",
+            ],
         ];
 
         for ($i = 0; $i < count($genres); $i++) {
-            $genres[$i]['slug'] =  \Illuminate\Support\Str::slug($genres[$i]['name']);
+            $genres[$i]['description'] = fake()->sentences(3, true);
+            $genres[$i]['created_at'] = now();
         }
 
         \App\Models\Genre::insert($genres);
