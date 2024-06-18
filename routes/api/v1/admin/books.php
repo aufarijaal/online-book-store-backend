@@ -17,4 +17,7 @@ Route::prefix('books')->group(function () {
   Route::match(['put', 'patch'], '/{id}', [\App\Http\Controllers\API\v1\Admin\BookController::class, 'update'])->name('books.update');
 
   Route::delete('/', [\App\Http\Controllers\API\v1\Admin\BookController::class, 'destroy'])->name('books.destroy');
+
+  Route::match(['put', 'patch'], '/{id}/cover', [\App\Http\Controllers\API\v1\Admin\BookController::class, 'updateCover'])->name('books.update_cover');
+  Route::delete('/{id}/cover', [\App\Http\Controllers\API\v1\Admin\BookController::class, 'deleteCover'])->name('books.delete_cover');
 });

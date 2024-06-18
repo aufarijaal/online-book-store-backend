@@ -35,7 +35,7 @@ class BookSeeder extends Seeder
                     ]),
                     'stock_qty' => fake()->numberBetween(0, 200),
                     'cover_image' => $book->cover->filename . '.jpg',
-                    'slug' => $book->slug,
+                    'slug' => \Illuminate\Support\Str::slug($book->title . '-' . \Illuminate\Support\Str::random(10)),
                     'created_at' => now()
                 ]
             );

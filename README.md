@@ -14,26 +14,35 @@ git clone https://www.github.com/aufarijaal/online-book-store-backend
 cd online-book-store-backend
 ```
 
-3. Install dependencies
+3. Generate key
+
+```bash
+php artisan key:genereate
+```
+
+4. Set up midtrans keys and the front end url in .env
+
+```
+MIDTRANS_SERVER_KEY="serverkey"
+MIDTRANS_CLIENT_KEY="clientkey"
+MIDTRANS_IS_PRODUCTION=false
+FRONTEND_URL=urlhere # if not specified, it will use http://localhost:3000
+```
+
+5. Install dependencies
 
 ```bash
 composer install
 ```
 
-4. Activate the laravel sail
+6. Migrate and seed the database
 
 ```bash
-./vendor/bin/sail up -d
+php artisan migrate --seed
 ```
 
-5. Migrate and seed the database
+7. Generate `ngrok` public url by running. ensure `ngrok` is installed.
 
 ```bash
-./vendor/bin/sail artisan migrate --seed
-```
-
-6. Generate `ngrok` public url, copy the `uri` and then put it in the Midtrans configuration.
-
-```bash
-curl localhost:4040/api/tunnels
+ngrok http http://localhost:8000 # or adjust it to your laravel server port
 ```

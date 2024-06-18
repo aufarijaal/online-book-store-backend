@@ -13,8 +13,12 @@ class Address extends Model
         'id'
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

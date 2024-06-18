@@ -9,9 +9,19 @@ class AddressController extends Controller
 {
     public function index(Request $r)
     {
-        $addresses = $r->has("forDropdown") ?
-            \App\Models\Address::select(['id', 'name', 'full_address', 'city', 'state', 'country', 'postal_code', 'is_active'])->where('user_id', auth()->user()->id)->get() :
-            \App\Models\Address::where('user_id', auth()->user()->id)->get();
+        // if ($r->has('forDropdown')) {
+        //     $addresses = \App\Models\Address::select(['id', 'name', 'full_address', 'city', 'state', 'country', 'postal_code', 'is_active'])
+        //         ->where('user_id', auth()->user()->id)
+        //         ->get();
+
+        //     return response()->json([
+        //         'message' => 'OK',
+        //         'data' => $addresses
+        //     ]);
+        // }
+
+        $addresses = \App\Models\Address::select(['id', 'name', 'full_address', 'city', 'state', 'country', 'postal_code', 'is_active'])
+            ->where('user_id', auth()->user()->id)->get();
 
         return response()->json([
             'message' => 'OK',

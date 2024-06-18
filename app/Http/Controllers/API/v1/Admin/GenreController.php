@@ -18,14 +18,31 @@ class GenreController extends Controller
             ]);
         }
 
-        $sizePerPage = $r->query('sizePerPage') ?? 20;
-        $genres = $r->query('q') ?
-            \App\Models\Genre::where('name', 'LIKE', '%' . $r->query('q') . '%')->paginate($sizePerPage) :
-            \App\Models\Genre::paginate($sizePerPage);
+        $sortBy = $r->query('sortBy') ?? "id";
+        $dataPerPage = $r->query('dataPerPage') ?? 20;
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
+
+        $genresCount = \App\Models\Genre::count();
+        $genres = \App\Models\Genre::select([
+            'genres.id',
+            'genres.name',
+            'genres.description',
+            \Illuminate\Support\Facades\DB::raw('COUNT(books.id) as books_count')
+        ])->where(function ($query) use ($q) {
+            $query
+                ->where('name', 'LIKE', '%' . $q . '%');
+        })
+            ->leftJoin('books', 'books.genre_id', '=', 'genres.id')
+            ->groupBy('genres.id', 'genres.name', 'genres.description')
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($dataPerPage, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $genres
+            'data' => $genres,
+            'count' => $genresCount
         ]);
     }
 

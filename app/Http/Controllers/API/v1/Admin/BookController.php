@@ -24,20 +24,40 @@ class BookController extends Controller
             ]);
         }
 
-        $sizePerPage = $r->query('sizePerPage') ?? 20;
-        $books = $r->query('q') ?
-            \App\Models\Book::where('title', 'LIKE', '%' . $r->query('q') . '%')->paginate($sizePerPage) :
-            \App\Models\Book::paginate($sizePerPage);
+        $sortBy = $r->query('sortBy') ?? "id";
+        $dataPerPage = $r->query('dataPerPage') ?? 20;
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
 
-        $books->each(function ($book) {
-            if (!is_null($book->cover_image)) {
-                $book->cover_image = asset('storage/covers/' . $book->cover_image);
-            }
-        });
+        $booksCount = \App\Models\Book::count();
+        $books = \App\Models\Book::select([
+            'books.id',
+            'books.author_id',
+            'books.genre_id',
+            'books.title',
+            'books.published_date',
+            'books.price',
+            'books.stock_qty',
+            'books.created_at',
+            'books.cover_image',
+            'authors.name as author_name',
+            'genres.name as genre_name'
+        ])->where(function ($query) use ($q) {
+            $query
+                ->where('books.title', 'LIKE', '%' . $q . '%')
+                ->where('genres.name', 'LIKE', '%' . $q . '%')
+                ->orWhere('authors.name', 'LIKE', '%' . $q . '%');
+        })
+            ->join('genres', 'books.genre_id', '=', 'genres.id')
+            ->join('authors', 'books.author_id', '=', 'authors.id')
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($dataPerPage, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $books
+            'data' => $books,
+            'count' => $booksCount
         ]);
     }
 
@@ -68,7 +88,10 @@ class BookController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        $data = [...$r->only(['author_id', 'genre_id', 'title', 'published_date', 'stock_qty', 'price'])];
+        $data = [
+            ...$r->only(['author_id', 'genre_id', 'title', 'published_date', 'stock_qty', 'price']),
+            'slug' => \Illuminate\Support\Str::slug($r->input('title') . '-' . \Illuminate\Support\Str::random(10))
+        ];
         $coverName = null;
 
         if ($r->hasFile('cover_image')) {
@@ -95,12 +118,11 @@ class BookController extends Controller
         ]);
     }
 
-    public function update(Request $r)
+    public function update(Request $r, string $id)
     {
         \Illuminate\Support\Facades\DB::beginTransaction();
 
         $validated = $r->validate([
-            'id' => 'required|numeric|integer|exists:books,id',
             'author_id' => 'numeric|integer|exists:authors,id',
             'genre_id' => 'numeric|integer|exists:genres,id',
             'title' => 'string|max:255',
@@ -110,33 +132,64 @@ class BookController extends Controller
         ]);
 
         $data = [...$validated];
-        $coverName = null;
 
-        if ($r->hasFile('cover_image')) {
-            $r->validate([
-                'cover_image' => 'image'
-            ]);
-            $cover = $r->file('cover_image');
-            $coverName = sprintf(
-                '%s-%s-%s.%s',
-                \Illuminate\Support\Str::kebab(\App\Models\Author::where('id', $r->input('author_id'))->get()->first()->name),
-                \Illuminate\Support\Str::kebab($r->input('title')),
-                \Illuminate\Support\Str::random(32),
-                $cover->getClientOriginalExtension()
-            );
-            $cover->storePubliclyAs('covers', $coverName, 'public');
-            $data['cover_image'] = $coverName;
-
-            // Remove the existing one
-            \Illuminate\Support\Facades\Storage::delete('public/covers/' . \App\Models\Book::find($validated['id'])->cover_image);
-        }
-
-        \App\Models\Book::where('id', $validated['id'])->update($data);
+        \App\Models\Book::where('id', $id)->update($data);
         \Illuminate\Support\Facades\DB::commit();
 
         return response()->json([
             'message' => 'OK'
         ]);
+    }
+
+    public function updateCover(Request $r, string $id)
+    {
+        error_log('author_id is ' . $r->input('author_id'));
+        $authorName = \App\Models\Author::where('id', $r->input('author_id'))->get()->first()->name;
+        error_log('author name is' . $authorName);
+
+        $coverName = null;
+
+        $r->validate([
+            'title' => 'required|string',
+            'author_id' => 'required|integer|exists:authors,id',
+            'cover_image' => 'image'
+        ]);
+
+        $cover = $r->file('cover_image');
+
+        \Illuminate\Support\Facades\Storage::delete('public/covers/' . \App\Models\Book::find($id)->cover_image);
+
+        $coverName = sprintf(
+            '%s-%s-%s.%s',
+            \Illuminate\Support\Str::kebab($authorName),
+            \Illuminate\Support\Str::kebab($r->input('title')),
+            \Illuminate\Support\Str::random(32),
+            $cover->getClientOriginalExtension()
+        );
+        $cover->storePubliclyAs('covers', $coverName, 'public');
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        \App\Models\Book::where('id', $id)->update([
+            'cover_image' => $coverName
+        ]);
+        \Illuminate\Support\Facades\DB::commit();
+
+        return response()->json([
+            'message' => 'OK'
+        ]);
+    }
+
+    public function deleteCover(string $id)
+    {
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        \App\Models\Book::where('id', $id)->update([
+            'cover_image' => null
+        ]);
+        \Illuminate\Support\Facades\DB::commit();
+
+        \Illuminate\Support\Facades\Storage::delete('public/covers/' . \App\Models\Book::find($id)->cover_image);
+
+        return response()->noContent();
     }
 
     public function destroy(Request $r)

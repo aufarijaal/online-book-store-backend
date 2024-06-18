@@ -9,14 +9,31 @@ class OrderController extends Controller
 {
     public function index(Request $r)
     {
-        $sizePerPage = $r->query('sizePerPage') ?? 20;
-        $orders = $r->query('q') ?
-            \App\Models\Order::where('user_id', 'LIKE', '%' . $r->query('q') . '%')->with('customer:id,name')->paginate($sizePerPage) :
-            \App\Models\Order::with('customer:id,name')->paginate($sizePerPage);
+        $sortBy = $r->query('sortBy') ?? "id";
+        $dataPerPage = $r->query('dataPerPage') ?? 20;
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
+
+        $orders = \App\Models\Order::count();
+
+        $orders = \App\Models\Order::select([
+            'orders.id',
+            'orders.user_id as customer_id',
+            'users.name as customer_name',
+            'orders.order_date',
+            'orders.total_amount',
+            'orders.address',
+            'orders.paid',
+        ])->where('users.name', 'LIKE', '%' . $q . '%')
+            ->leftJoin('users', 'users.id', '=', 'orders.user_id')
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($dataPerPage, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $orders
+            'data' => $orders,
+            'count' => $orders
         ]);
     }
 

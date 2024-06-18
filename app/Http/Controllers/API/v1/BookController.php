@@ -10,14 +10,29 @@ class BookController extends Controller
     public function index(Request $r)
     {
         if ($r->has('forHomePage')) {
-            $books = \App\Models\Book::where("stock_qty", ">", 0)->with(['author:id,name,slug'])->get(['id', 'author_id', 'title', 'price', 'cover_image', 'slug'])->take(20);
-
-            $books->each(function ($book) {
-                if (!is_null($book->cover_image)) {
-                    $book->cover_image = asset('storage/covers/' . $book->cover_image);
-                }
-            });
-
+            $books = \App\Models\Book::select([
+                'books.id',
+                'books.author_id',
+                'books.title',
+                'books.price',
+                'books.cover_image',
+                'books.slug',
+                'authors.name as author_name',
+                'authors.slug as author_slug',
+            ])->where('stock_qty', '>', 0)
+                ->leftJoin('authors', 'authors.id', '=', 'books.author_id')
+                ->groupBy(
+                    'books.id',
+                    'books.author_id',
+                    'books.title',
+                    'books.price',
+                    'books.cover_image',
+                    'books.slug',
+                    'authors.name',
+                    'authors.slug'
+                )
+                ->take(20)
+                ->get();
             return response()->json([
                 'message' => 'OK',
                 'data' => $books
@@ -29,10 +44,6 @@ class BookController extends Controller
     {
         $book = \App\Models\Book::where('slug', $slug)->with(['author:id,name,slug', 'genre:id,name'])->get()->first();
 
-        if (!is_null($book->cover_image)) {
-            $book->cover_image = asset('storage/covers/' . $book->cover_image);
-        }
-
         return response()->json([
             'message' => 'OK',
             'data' => $book
@@ -41,20 +52,42 @@ class BookController extends Controller
 
     public function search(Request $r)
     {
-        $books = \App\Models\Book::with(['author:id,name,slug'])
-            ->where('title', 'LIKE', '%' . $r->query('q') . '%')
-            ->orWhereRelation('author', 'name', 'LIKE', '%' . $r->query('q') . '%')
-            ->get(['id', 'author_id', 'title', 'price', 'cover_image', 'slug']);
+        $sortBy = $r->query('sortBy') ?? "title";
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
 
-        $books->each(function ($book) {
-            if (!is_null($book->cover_image)) {
-                $book->cover_image = asset('storage/covers/' . $book->cover_image);
-            }
-        });
+        $books = \App\Models\Book::select([
+            'books.id',
+            'books.author_id',
+            'books.title',
+            'books.price',
+            'books.cover_image',
+            'books.slug',
+            'authors.name as author_name',
+            'authors.slug as author_slug',
+        ])->where(function ($query) use ($q) {
+            $query
+                ->where('books.title', 'LIKE', '%' . $q . '%')
+                ->orWhere('authors.name', 'LIKE', '%' . $q . '%');
+        })
+            ->leftJoin('authors', 'authors.id', '=', 'books.author_id')
+            ->groupBy(
+                'books.id',
+                'books.author_id',
+                'books.title',
+                'books.price',
+                'books.cover_image',
+                'books.slug',
+                'authors.name',
+                'authors.slug'
+            )
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate(20, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $books
+            'data' => $books,
         ]);
     }
 }

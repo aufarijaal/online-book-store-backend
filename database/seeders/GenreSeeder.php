@@ -36,7 +36,7 @@ class GenreSeeder extends Seeder
             [
                 "id" => 5,
                 "name" => "Children\'s Books",
-                "slug" => "children\'s-books",
+                "slug" => "childrens-books",
             ],
             [
                 "id" => 6,

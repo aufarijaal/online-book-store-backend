@@ -9,14 +9,32 @@ class AddressController extends Controller
 {
     public function index(Request $r)
     {
-        $sizePerPage = $r->query('sizePerPage') ?? 20;
-        $addresses = $r->query('q') ?
-            \App\Models\Address::where('name', 'LIKE', '%' . $r->query('q') . '%')->paginate($sizePerPage) :
-            \App\Models\Address::paginate($sizePerPage);
+        $sortBy = $r->query('sortBy') ?? "id";
+        $dataPerPage = $r->query('dataPerPage') ?? 20;
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
+
+        $addressesCount = \App\Models\Address::count();
+        $addresses = \App\Models\Address::select(['addresses.*', 'users.name as customer_name'])
+            ->where(function ($query) use ($q) {
+                $query
+                    ->where('addresses.name', 'LIKE', '%' . $q . '%')
+                    ->orWhere('addresses.full_address', 'LIKE', '%' . $q . '%')
+                    ->orWhere('addresses.city', 'LIKE', '%' . $q . '%')
+                    ->orWhere('addresses.state', 'LIKE', '%' . $q . '%')
+                    ->orWhere('addresses.country', 'LIKE', '%' . $q . '%')
+                    ->orWhere('users.name', 'LIKE', '%' . $q . '%')
+                    ->orWhere('addresses.postal_code', 'LIKE', '%' . $q . '%');
+            })
+            ->join('users', 'addresses.user_id', '=', 'users.id')
+            ->orderBy($sortBy == 'customer_name' ? 'users.name' : $sortBy, $sortDirection)
+            ->paginate($dataPerPage, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $addresses
+            'data' => $addresses,
+            'count' => $addressesCount
         ]);
     }
 

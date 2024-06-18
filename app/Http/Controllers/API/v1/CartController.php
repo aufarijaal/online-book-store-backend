@@ -9,17 +9,10 @@ class CartController extends Controller
 {
     public function index(Request $r)
     {
-        $cartItems = \App\Models\CartItem::with(['book'])->where("user_id", auth()->user()->id)->get();
-
-        if (count($cartItems) > 0) {
-            $cartItems->each(function ($item) {
-                if (!is_null($item->book->cover_image)) {
-                    $item->book->cover_image = asset('storage/covers/' . $item->book->cover_image);
-                }
-                // Deprecated action
-                $item->unavailable = $item->book->stock_qty < $item->qty;
-            });
-        }
+        $cartItems = \App\Models\CartItem::with(['book'])
+            ->where("user_id", auth()->user()->id)
+            ->where('order_id', null)
+            ->get();
 
         return response()->json([
             'message' => 'OK',
@@ -95,7 +88,10 @@ class CartController extends Controller
 
     public function count()
     {
-        $count = \App\Models\CartItem::where("user_id", auth()->user()->id)->count();
+        $count = \App\Models\CartItem::with(['book'])
+            ->where("user_id", auth()->user()->id)
+            ->where('order_id', null)
+            ->count();
 
         return response()->json([
             'message' => 'OK',

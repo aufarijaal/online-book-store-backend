@@ -44,9 +44,9 @@ class PaymentController extends Controller
                 ], 422);
             }
 
-            if (!is_null($item->book->cover_image)) {
-                $item->book->cover_image = asset('storage/covers/' . $item->book->cover_image);
-            }
+            // if (!is_null($item->book->cover_image)) {
+            //     $item->book->cover_image = asset('storage/covers/' . $item->book->cover_image);
+            // }
 
             $orderItem = \App\Models\OrderItem::make([
                 'book_id' => $item->book->id,
@@ -155,7 +155,6 @@ class PaymentController extends Controller
         $serverKey = config('services.midtrans.serverKey');
         $hashed = hash('sha512', $r->order_id . $r->status_code . $r->gross_amount . $serverKey);
         if ($hashed == $r->signature_key) {
-            error_log("Transaction Status :" . $r->transaction_status);
             if ($r->transaction_status == 'settlement') {
                 \Illuminate\Support\Facades\DB::beginTransaction();
 

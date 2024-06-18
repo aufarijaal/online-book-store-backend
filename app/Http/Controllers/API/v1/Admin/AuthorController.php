@@ -10,7 +10,7 @@ class AuthorController extends Controller
     public function index(Request $r)
     {
         if ($r->has('forDropdown')) {
-            $authors = \App\Models\Author::get(['id', 'name', 'nationality']);
+            $authors = \App\Models\Author::orderBy('name')->get(['id', 'name', 'nationality']);
 
             return response()->json([
                 'message' => 'OK',
@@ -18,14 +18,33 @@ class AuthorController extends Controller
             ]);
         }
 
-        $sizePerPage = $r->query('sizePerPage') ?? 20;
-        $authors = $r->query('q') ?
-            \App\Models\Author::where('name', 'LIKE', '%' . $r->query('q') . '%')->paginate($sizePerPage) :
-            \App\Models\Author::paginate($sizePerPage);
+        $sortBy = $r->query('sortBy') ?? "id";
+        $dataPerPage = $r->query('dataPerPage') ?? 20;
+        $page = $r->query('page') ?? 1;
+        $sortDirection = $r->query('sortDirection') ?? 'asc';
+        $q = $r->query('q') ?? '';
+
+        $authorsCount = \App\Models\Author::count();
+        $authors = \App\Models\Author::select([
+            'authors.id',
+            'authors.name',
+            'authors.dob',
+            'authors.nationality',
+            \Illuminate\Support\Facades\DB::raw('COUNT(books.id) as books_count')
+        ])->where(function ($query) use ($q) {
+            $query
+                ->where('name', 'LIKE', '%' . $q . '%')
+                ->orWhere('nationality', 'LIKE', '%' . $q . '%');
+        })
+            ->leftJoin('books', 'books.author_id', '=', 'authors.id')
+            ->groupBy('authors.id', 'authors.name', 'authors.dob', 'authors.nationality')
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($dataPerPage, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
-            'data' => $authors
+            'data' => $authors,
+            'count' => $authorsCount
         ]);
     }
 
@@ -68,7 +87,7 @@ class AuthorController extends Controller
 
         $validated = $r->validate([
             'id' => 'required|numeric|integer|exists:authors,id',
-            'name' => 'string|max:255|unique:authors,name',
+            'name' => ['string', 'max:255', \Illuminate\Validation\Rule::unique('authors', 'name')->ignore($r->input('id'))],
             'dob' => 'string|max:255|date_format:Y-m-d',
             'nationality' => 'string|max:255',
         ]);

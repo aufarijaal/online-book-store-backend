@@ -9,27 +9,13 @@ class OrderController extends Controller
 {
     public function index(Request $r)
     {
+        $sortBy = $r->query('sortBy') ?? "newest";
+        $page = $r->query('page') ?? 1;
+
         $orders = \App\Models\Order::with(['orderItems.book'])
-            ->where('user_id', auth()->user()->id)->get();
-
-        // if ($r->has('sortBy')) {
-        //     if ($r->query('sortBy') === 'payment') {
-        //         $orders->orderBy('paid', $r->query('order') ?? 'asc');
-        //     } else if ($r->query('sortBy') === 'amount') {
-        //         $orders->orderBy('total_amount', $r->query('order') ?? 'asc');
-        //     }
-        // }
-
-        if (count($orders) > 0) {
-            $orders->each(function ($item) {
-                $item->orderItems->each(function ($orderItem) {
-                    if (!is_null($orderItem->book->cover_image) && !str_starts_with($orderItem->book->cover_image, 'http')) {
-                        $path = asset('storage/covers/' . $orderItem->book->cover_image);
-                        $orderItem->book->cover_image = $path;
-                    }
-                });
-            });
-        }
+            ->where('user_id', auth()->user()->id)
+            ->orderBy('order_date', $sortBy === 'newest' ? 'desc' : 'asc')
+            ->paginate(5, ['*'], 'page', $page);
 
         return response()->json([
             'message' => 'OK',
